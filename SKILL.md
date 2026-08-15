@@ -99,11 +99,11 @@ understand.
 See §10. Never authenticate, never use credentials, never take an irreversible
 external action, never access private accounts or restricted content.
 
-**R10 — Write artifacts to disk as you go.**
-Do not hold a review in conversation. Each step writes its file under
-`flowbreaker/` before the next step begins, so the work survives the session and
-can be resumed, diffed and reviewed by someone else. The files are the record; the
-conversation is the interface (R12). Neither substitutes for the other.
+**R10 — Ask in chat; write down what was decided.**
+Phase A (restate, audit, ask, roles, flows) is conversation and writes nothing —
+filing a question while asking it states the same fact twice. Phase B writes what
+outlives the session: the decisions, the edge cases, the criteria, the tests, the
+report. Questions are ephemeral; answers are permanent (§3).
 
 **R11 — Each fact appears exactly once.** Defined in §8. The report is organized by
 issue, not by artifact type; one defect stated five ways is still one defect.
@@ -115,13 +115,17 @@ frame every one with real options, and recompute after each answer.
 
 ## §2 — Modes
 
-Pick the mode from what the user asked for. If ambiguous, ask — it's a one-word
-answer and it changes how much of their time you're about to spend.
+**Infer the mode; do not ask.** What the user typed almost always settles it — "build
+a leave approval feature" and "review docs/prd.md" are not ambiguous. State the mode
+you picked in one line so it can be corrected, then go. Asking "which mode?" on every
+invocation is friction charged to the user for a decision they already made. Ask only
+when it is genuinely 50/50.
 
 | Mode | Trigger | Runs | Time |
 |---|---|---|---|
+| `build` | **"build X", "implement X", "add X"** — an implementation request | Steps 1–3, capped | ~2 min |
 | `quick` | Small feature, rough idea, "sanity-check this" | Steps 1, 2 (light), 3, 6 | ~10 min |
-| `review` | A real PRD or spec. **The default.** | Steps 1–9 | ~20–30 min |
+| `review` | A real PRD or spec. **The default for a document.** | Steps 1–9 | ~20–30 min |
 | `prototype` | A built prototype + approved requirements | §10 | varies |
 
 **`quick`** exists so that small work still gets checked. Restate the problem,
@@ -133,9 +137,36 @@ contradictions, and skip the terminology, unfalsifiability and silent-scope pass
 You cannot skip it entirely — every question must name what it blocks (§3 step 3),
 and with no `REQ-*` there is nothing to block.
 
-`quick` writes `00`, `02`, `03` and `06` only, uses the same IDs, and applies GATE 1
-normally. So a `quick` run upgrades into a full one later instead of being thrown
-away. End one by naming what a full review would add.
+`quick` writes `decisions.md` and `edge-cases.md` only, uses the same IDs, and applies
+GATE 1 normally. So a `quick` run upgrades into a full one later instead of being
+thrown away. End one by naming what a full review would add.
+
+**`build`** is the point of the whole skill.
+
+Someone types "build leave approval" into a coding agent, and the agent — fast,
+helpful, no product instincts — starts writing. In doing so it silently decides that
+managers can approve their own requests, that sick leave is visible to the team, and
+that a request nobody acts on sits there forever. Those are product decisions being
+made by autocomplete. Every other mode only fires once someone already *knows* they
+have a spec problem, which is the case where they need help least.
+
+So `build` runs steps 1–3 and stops at GATE 1, then hands back to the coding agent:
+
+- **Cap at 3 questions**, and only ones where a wrong answer changes the data model,
+  the permission model, or something else expensive to reverse later. "What colour is
+  the button" is not one. If you cannot get under three, that is a spec problem, not a
+  build task — say so and offer `review`.
+- **No report, no verdict, no readiness.** The output is the agent proceeding to
+  build, carrying the answers and the top edge cases into the code it writes.
+- **Write `decisions.md` anyway.** Two minutes of questions produced real product
+  decisions and the code is about to encode them. That file is why the code looks the
+  way it does.
+- **Name the edge cases you are handling** as you build — "handling double-approval
+  via browser back, and approver deactivated mid-flight" — so the user can veto scope
+  they did not want.
+
+If the request is large enough that three questions cannot cover it, do not quietly
+build anyway. Say what you would need to ask, and let them choose `review`.
 
 **`review`** is the full lifecycle in §3.
 
@@ -147,35 +178,73 @@ and say why.
 
 ## §3 — The workflow
 
-Nine steps, two gates. Write each artifact to disk before starting the next step.
+Nine steps, two gates, **two phases**.
 
-| # | Step | Writes | Produces IDs |
-|---|---|---|---|
-| 1 | Restate the problem | `00-problem-brief.md` | `PROB-*` |
-| 2 | Audit the source document | `01-assumptions.md`, `03-prd-audit.md` | `REQ-*`, `ASSUMP-*` |
-| 3 | Generate and prioritize questions | `02-questions.md` | `Q-*` |
-| — | **GATE 1** | — | — |
-| 4 | Roles and permissions | `04-roles-permissions.md` | — |
-| 5 | Flow audit and state generation | `05-flows.md` | `FLOW-*`, `STATE-*` |
-| 6 | Edge cases | `06-edge-cases.md` | `EDGE-*` |
-| 7 | Acceptance criteria review | `07-acceptance-review.md` | — |
-| 8 | Test cases | `08-tests.md` | `TEST-*` |
-| 9 | Traceability, readiness, report | `09-traceability.md`, `10-readiness.md`, `report.html` | `RISK-*` |
-| — | **GATE 2** | — | — |
+### The two phases
+
+| | Phase A — conversation | Phase B — artifacts |
+|---|---|---|
+| **Steps** | 1–5 | 6–9 |
+| **Lives in** | the chat | `flowbreaker/` |
+| **Writes** | nothing | 4 files + `report.html` |
+
+**Phase A happens in conversation and writes no files.** Restating the problem,
+auditing the document, asking questions, working out roles, permissions, flows and
+states — all of it is said, not filed. The user is *right there*; writing a question
+to a file while simultaneously asking it in chat is the same fact stated twice (R11),
+and a directory of eleven files is a worse way to answer four questions than four
+questions are.
+
+**Phase B writes what is durable.** Once the questions are settled there is something
+worth keeping, and it goes to disk.
+
+The dividing line is not "early vs late". It is:
+
+> **Questions are ephemeral. Answers are permanent.**
+>
+> "Who approves?" stops mattering the moment it is answered. *"Manager decides, HR
+> audits after — §5 was stale text from an earlier draft"* is a product decision
+> someone will need in four months when a new engineer asks why HR cannot approve.
+> That belongs in a file a person can find without scrolling a chat log.
+
+Roles, permissions, flows and states are **analysis, not artifacts**. Build the
+permission matrix because `undefined` cells are findings — then report the findings
+and throw the matrix away. Nobody has ever reopened a permission matrix.
+
+### The steps
+
+| # | Step | Phase | Writes | Produces IDs |
+|---|---|---|---|---|
+| 1 | Restate the problem | A | — | `PROB-*` |
+| 2 | Audit the source document | A | — | `REQ-*`, `ASSUMP-*` |
+| 3 | Generate and ask questions | A | — | `Q-*` |
+| — | **GATE 1** | A | — | — |
+| 4 | Roles and permissions | A | — | — |
+| 5 | Flow audit and state generation | A | — | `FLOW-*`, `STATE-*` |
+| 6 | Edge cases | B | `edge-cases.md` | `EDGE-*` |
+| 7 | Acceptance criteria review | B | `acceptance.md` | — |
+| 8 | Test cases | B | `tests.md` | `TEST-*` |
+| 9 | Decisions, readiness, report | B | `decisions.md`, `report.html` | `RISK-*` |
+| — | **GATE 2** | B | — | — |
 
 **Where files go.** `flowbreaker/` at the **repository root** — not beside the source
-document. One review per repo, findable in the same place every time, regardless of
-whether the PRD lives in `docs/`, `specs/` or the user's home directory.
+document. Findable in the same place every time, regardless of whether the PRD lives
+in `docs/`, `specs/` or the user's home directory.
 
-**File numbers are reading order, not execution order.** Step 2 writes `01` and `03`;
-step 3 writes `02`. That is deliberate: the questions belong next to the assumptions
-in a directory listing, because that is the pair a returning reader wants.
+**`decisions.md` is the important one.** Every question asked, the answer given, and
+every assumption still standing. It is the "why is it built like this" file, and it is
+the only record that Phase A happened. Write it at step 9 from the conversation, not
+incrementally — but write it *first* among the step-9 outputs, because if anything is
+going to be interrupted it should not be that.
 
-**Artifacts get revised, not just appended.** Later steps legitimately go back and
-fill in earlier files — step 5 populates the `Flows` column of `03-prd-audit.md`,
-step 8 populates `Tests`. Leave such cells empty on the first pass and complete them
-at step 9. Two things never change once written: an ID's meaning, and an answered
-question's answer (§4).
+**Traceability is not a file.** It is a property of the other four, checked at step 9
+and reported in `report.html`. Likewise there is no `readiness.md`: `report.html` is
+the readiness report, and a Markdown twin of it is R11 with extra steps.
+
+**Phase A survives nothing.** Close the terminal mid-questions and the review restarts
+from step 1. That is the accepted cost of not writing eleven files for a twenty-minute
+conversation. If a review is genuinely going to span days, say so and write
+`decisions.md` early with the questions in it.
 
 ### Step 1 — Restate the problem
 
@@ -187,9 +256,9 @@ This is deliberately first and deliberately cheap. If your reading is wrong, the
 user spends ten seconds fixing it here instead of reading sixty edge cases built
 on a misreading. Keep it to a short paragraph and one question.
 
-**Step 1 is not a gate.** Write the restatement and its question into
-`00-problem-brief.md` and continue to step 2. The user will correct you at GATE 1 if
-you got it wrong, and stopping twice in one run trains people to skip the stops.
+**Step 1 is not a gate.** Say the restatement, ask the one question, and continue to
+step 2 without waiting. The user will correct you at GATE 1 if you got it wrong, and
+stopping twice in one run trains people to skip the stops.
 
 **The exception:** if the source document states no user problem *at all*, stop here.
 You cannot audit requirements against a problem nobody has written down, and
@@ -295,8 +364,8 @@ instead of visible progress:
 
 **Cap the round, not the review.** No more than 7 questions in one stop-and-wait, and
 that cap is a ceiling, not a target — a single well-chosen question beats seven. The
-rest go to a visible "next batch" list in `02-questions.md`, so nothing is lost but
-nothing competes for attention now.
+rest are named in one line — "six more, none blocking" — so nothing is hidden but
+nothing competes for attention now. They carry into `decisions.md` at step 9.
 
 ### GATE 1 — the critical-question stop
 
@@ -721,9 +790,8 @@ Before you present a batch, drop any question that fails these:
 
 ## §7 — Artifact formats
 
-Eleven files, written to `flowbreaker/` in the user's repository. Each is Markdown
-for human review, with structured blocks where machines or later runs need to read
-them back.
+Four Markdown files, written to `flowbreaker/` in the user's repository, plus
+`report.html` (§9). Nothing else is written — Phase A is conversation (§3).
 
 Every file starts with this header:
 
@@ -732,227 +800,70 @@ Every file starts with this header:
 > Status: in progress | complete | blocked at GATE 1
 ```
 
-### `00-problem-brief.md`
+### `decisions.md`
+
+**The most important file in the run**, and the only record that Phase A happened.
+Every question asked, the answer given, and every assumption still standing. Someone
+opens this in four months to find out why the system works the way it does.
+
+Write it from the conversation at step 9, and write it **first** among the step-9
+outputs — if anything gets interrupted, it should not be this.
 
 ```markdown
-# Problem Brief
+# Decisions
 
-## PROB-001
-**Problem:** <one paragraph, plain language>
-**Who has it:** <specific users, not "users">
-**Today they:** <current workaround>
-**Business objective:** <why the organisation cares>
-**Confidence:** evidence | inference | assumption
-**Source:** <quote or section reference, if evidence>
+## Answered
 
-## Jobs to be done
-- When <situation>, I want to <motivation>, so I can <outcome>.
+### Q-005 · was `critical` · permission
+**Who actually approves — the line manager, HR, or both?**
+§2 said the line manager; §5 said HR. These could not both describe the sole approver.
 
-## Non-goals
-- <explicitly out of scope>
-- **Not stated in source** — see Q-00X
+**Answer:** Manager decides; HR audits after the fact. §5 was stale text from an
+earlier draft.
+**Answered by:** product owner, in conversation
+**Consequence:** REQ-004 moves `contradictory` → `clear`. FLOW-003 deleted, ID
+retired and never reused. Raised Q-015.
 
-## My understanding — please confirm or correct
-<the restatement, and the one question>
-```
-
-### `01-assumptions.md`
-
-```markdown
-# Assumptions
-
-Every gap filled without an answer. These are NOT facts (R3).
-
-| ID | Assumption | Source | Status | Affects | Risk if wrong |
-|---|---|---|---|---|---|
-| ASSUMP-001 | Managers cannot approve their own requests | inferred | unvalidated | REQ-004, FLOW-002 | Permission hole, audit finding |
-| ASSUMP-002 | Leave is measured in whole days, not hours | user_directed | assumed | REQ-002 | Rework of the data model |
-
-`source`: `inferred` (you reasoned to it) | `user_directed` (user said "assume X")
-| `domain_convention` (standard practice in this domain)
-`status`: `unvalidated` | `assumed` | `validated` | `invalidated`
-```
-
-### `02-questions.md`
-
-The question queue. This file is the spine of the review — it persists across
-sessions and is how the user answers.
-
-```markdown
-# Open Questions
-
-**2 critical open — GATE 1 is blocking.**
-
----
-### Q-001 · `critical` · permission
+### Q-001 · was `critical` · permission
 **Can a manager approve their own leave request?**
+**Answer:** No — escalates to skip-level.
+**Consequence:** Created REQ-015 and, in turn, Q-015 — the CEO has no skip-level.
 
-- **Why it matters:** The source names managers as approvers but never excludes
-  self-approval. If unhandled this is a permission hole and an audit finding.
-- **Blocks:** REQ-004, FLOW-002
-- **Answer type:** single_choice
-- **Options:** No — escalates to skip-level · Yes · Only below a day threshold
-- **Status:** `open`
-- **Answer:**
+## Open
 
----
-### Q-002 · `high` · flow
-**What happens to pending requests when the approving manager leaves?**
-...
-```
-
-Machine-readable form, per your schema — use this in the HTML report and when
-reading the queue back on a later run:
-
-```json
-{
-  "id": "Q-001",
-  "question": "Can a manager approve their own leave request?",
-  "reason": "The source names managers as approvers but never excludes self-approval. Unhandled, this is a permission hole and an audit finding.",
-  "risk": "critical",
-  "blocks": ["REQ-004", "FLOW-002"],
-  "category": "permission",
-  "answerType": "single_choice",
-  "suggestedOptions": ["No — escalates to skip-level", "Yes", "Only below a day threshold"],
-  "status": "open",
-  "answer": null
-}
-```
-
-`risk`: `critical|high|medium|low`
-`category`: `problem|scope|role|permission|data|flow|failure|security|ux`
-`answerType`: `free_text|single_choice|multiple_choice|boolean`
-`status`: `open|answered|assumed|deferred`
-
-**On re-run:** read this file first. Preserve every answered question with its
-answer verbatim and set it frozen. Never re-ask an answered question. Flag any
-artifact that was generated while a now-answered question was still open — it may
-need revising, and the user needs to know which parts.
-
-### `03-prd-audit.md`
-
-```markdown
-# PRD Audit
-
-## Requirements
-
-| ID | Requirement | Clarity | Confidence | Flows | Tests | Open Qs |
-|---|---|---|---|---|---|---|
-| REQ-001 | Employee can submit a leave request | clear | evidence | FLOW-001 | TEST-001, TEST-004 | — |
-| REQ-004 | Manager approves or rejects | ambiguous | evidence | FLOW-002 | — | Q-001 |
-
-`clarity`: `clear|ambiguous|contradictory|missing`
-
-## Contradictions
-### C-1 — Who approves?
-> §2: "The employee's line manager approves the request."
-> §5: "HR reviews and approves all leave requests."
-
-These cannot both be the sole approver. Either it is a two-stage approval that is
-never described as one, or one statement is stale. → Q-005
-
-## Undefined terminology
-| Term | Used in | Why it matters |
-|---|---|---|
-| "working day" | §3, §7 | Does it exclude public holidays? Which country's? Affects the balance calculation. |
-
-## Unfalsifiable requirements
-| Stated | Problem | Suggested |
-|---|---|---|
-| "Approval should be fast" | Not measurable | "Manager sees a new request within 60s of submission" |
-
-## Requirements quality summary
-- Total: 14 · clear 8 · ambiguous 4 · contradictory 1 · missing 1
-- Requirements with no acceptance criteria: 6
-- Requirements with no linked flow: 2 (REQ-011, REQ-013)
-```
-
-### `04-roles-permissions.md`
-
-```markdown
-# Roles and Permissions
-
-## Role matrix
-| Role | Who they are | Their goal | In source? |
+| ID | Question | Risk | Blocks |
 |---|---|---|---|
-| Employee | Any staff member | Get leave approved without chasing | yes |
-| Manager | Line manager | Approve quickly, keep the team covered | yes |
-| HR Admin | HR operations | Accurate records, no manual reconciliation | yes |
-| Auditor | Compliance | Prove who approved what, when | **no — inferred** |
+| Q-006 | What is a "working day", and can leave be backdated? | high | 6 items |
+| Q-015 | Who approves for an employee with no skip-level? | high | 4 items |
 
-## Permission matrix
-Role × action × resource. `undefined` cells are findings, never blanks.
+## Assumptions
 
-| Action / Resource | Employee | Manager | HR Admin | Auditor |
+| ID | Assumption | Source | Supports | If wrong |
 |---|---|---|---|---|
-| Submit request (own) | allow | allow | allow | deny |
-| View request (own) | allow | allow | allow | allow |
-| View request (other's) | **undefined → Q-004** | team only | allow | read-only |
-| Approve request (other's) | deny | allow | allow | deny |
-| Approve request (own) | deny | **undefined → Q-001** | **undefined → Q-001** | deny |
-| Delete request | **undefined → Q-009** | undefined | allow | deny |
+| ASSUMP-003 | One line manager per employee | inferred from §2 | TEST-020, EDGE-013 | Requests route nowhere for matrix-reporting staff |
+| ASSUMP-006 | Balance checked at submission, not approval | user_directed | TEST-006, EDGE-005 | The overdraw case changes shape entirely |
 
-## Data ownership
-- **Owner of a leave request:** the submitting employee.
-- **On deactivation:** unspecified → Q-002.
+`source`: `inferred` | `user_directed` | `document`
+
+An assumption never becomes a fact (R3). `user_directed` means the user said "assume
+X and continue" — it is still an assumption, and it still appears in the report.
 ```
 
-### `05-flows.md`
+**Never rewrite an answer.** An answered question's answer is immutable (§4). If the
+user changes their mind, that is a new entry recording the change and what it
+invalidated — not an edit that erases the earlier decision. The value of this file is
+that it is a history, not a snapshot.
 
-```markdown
-# User Flow Audit
-
-## FLOW-002 — Manager reviews and decides a request
-**Actor:** Manager · **Trigger:** Notification of a pending request
-**Requirements:** REQ-004, REQ-005, REQ-006
-**Happy path:** Open notification → see request → approve/reject → employee notified
-
-### States
-| ID | Name | Type | Trigger | Expected behaviour | Recovery | Eval? |
-|---|---|---|---|---|---|---|
-| STATE-007 | No pending requests | empty | Manager opens queue, nothing waiting | Empty state explaining requests appear here; link to team calendar | n/a | yes |
-| STATE-008 | Queue loading | loading | Open queue | Skeleton rows; no interaction until loaded | Retry on failure | yes |
-| STATE-009 | Approver deactivated | error | Manager left the company | **UNSPECIFIED** → Q-002 | unknown | yes |
-
-`type`: `empty|loading|partial|error|success|permission|concurrent`
-
-### Missing and broken paths
-| Finding | Impact | Ref |
-|---|---|---|
-| No path for a request whose approver left | Requests strand permanently | Q-002, EDGE-004 |
-| Back after approving re-shows the pending screen | Manager may approve twice | EDGE-007, TEST-012 |
-
-### Not applicable
-- **Partial-data state:** N/A — the queue is a single small query; it either loads or fails.
-```
-
-Machine-readable state form, per your schema:
-
-```json
-{
-  "id": "STATE-007",
-  "flowId": "FLOW-002",
-  "name": "No pending requests",
-  "trigger": "Manager opens the approval queue with nothing waiting",
-  "userImpact": "Manager cannot tell whether the queue is empty or broken",
-  "expectedBehaviour": "Empty state explaining that requests appear here when submitted; link to team calendar",
-  "recoveryAction": "n/a",
-  "relatedRequirements": ["REQ-004"],
-  "evaluationRequired": true,
-  "confidence": "inference"
-}
-```
-
-### `06-edge-cases.md`
+### `edge-cases.md`
 
 ```markdown
 # Edge Case Register
 
-| ID | Edge case | Category | Likelihood | Impact | Specified? | Flows | Test |
-|---|---|---|---|---|---|---|---|
-| EDGE-001 | Request submitted for a date in the past | input | high | medium | no | FLOW-001 | TEST-009 |
-| EDGE-004 | Approving manager deactivated while request pending | permission | medium | critical | no | FLOW-002 | TEST-011 |
-| EDGE-007 | Manager approves twice via browser back | timing | medium | high | no | FLOW-002 | TEST-012 |
+| ID | Edge case | Category | Likelihood | Impact | Specified? | Test |
+|---|---|---|---|---|---|---|
+| EDGE-001 | Request submitted for a date in the past | input | high | medium | no | TEST-009 |
+| EDGE-004 | Approving manager deactivated while request pending | permission | medium | critical | no | TEST-011 |
+| EDGE-007 | Manager approves twice via browser back | timing | medium | high | no | TEST-012 |
 
 `category`: `data|timing|permission|network|input|scale`
 
@@ -966,10 +877,13 @@ It will sit pending forever while the employee believes it is being reviewed.
 deactivation. This is a product decision → Q-002.
 ```
 
-### `07-acceptance-review.md`
+Detail blocks only for edge cases rated `high` or `critical` impact. The rest earn a
+table row; writing a paragraph about every one buries the three that matter.
+
+### `acceptance.md`
 
 ```markdown
-# Acceptance Criteria Review
+# Acceptance Criteria
 
 | REQ | Criterion | Testable | Unambiguous | States result | Covers failure | Verdict |
 |---|---|---|---|---|---|---|
@@ -992,7 +906,7 @@ deactivation. This is a product decision → Q-002.
 REQ-007, REQ-009, REQ-011, REQ-012, REQ-013, REQ-014
 ```
 
-### `08-tests.md`
+### `tests.md`
 
 ```markdown
 # Test Cases
@@ -1016,28 +930,7 @@ but not written — see the end of this file.
 - **Related:** REQ-004, REQ-005 · FLOW-002 · EDGE-004
 - **Blocked by:** Q-002 — expected behaviour is undefined, so this test asserts
   *that a defined behaviour exists*, not which one.
-```
 
-Machine-readable form, per your schema:
-
-```json
-{
-  "id": "TEST-011",
-  "title": "Pending request whose approver is deactivated",
-  "type": "permission",
-  "preconditions": ["Request R is pending, assigned to manager M", "M is active"],
-  "steps": ["Deactivate manager M", "Sign in as employee, open R", "Sign in as HR admin, open pending report"],
-  "expectedResults": ["R is not silently orphaned", "Employee sees accurate status", "R appears in an escalation view"],
-  "relatedRequirements": ["REQ-004", "REQ-005"],
-  "relatedFlows": ["FLOW-002"],
-  "priority": "critical"
-}
-```
-
-`type`: `happy_path|empty|error|permission|security|boundary|concurrency|recovery|accessibility`
-`priority`: `critical|high|medium|low`
-
-```markdown
 ## Identified but not written
 Ask to generate these.
 
@@ -1047,116 +940,13 @@ Ask to generate these.
 | TEST-027 | Queue with 500+ pending requests | boundary | low |
 ```
 
-### `09-traceability.md`
+`type`: `happy_path|empty|error|permission|security|boundary|concurrency|recovery|accessibility`
+`priority`: `critical|high|medium|low`
 
-```markdown
-# Traceability
-
-## Requirements → Flows
-| REQ | Statement | Flows | Gap |
-|---|---|---|---|
-| REQ-001 | Employee submits request | FLOW-001 | — |
-| REQ-011 | HR exports monthly report | **none** | No flow defined — orphaned requirement |
-
-## Requirements → Tests
-| REQ | Tests | Coverage |
-|---|---|---|
-| REQ-001 | TEST-001, TEST-004, TEST-009 | happy, empty, boundary |
-| REQ-011 | **none** | uncovered |
-
-## Questions → Blocked items
-| Q | Risk | Status | Blocks |
-|---|---|---|---|
-| Q-001 | critical | open | REQ-004, FLOW-002, TEST-010 |
-
-## Assumptions → Dependants
-| ASSUMP | Status | Depended on by |
-|---|---|---|
-| ASSUMP-001 | unvalidated | REQ-004, FLOW-002, TEST-010 |
-
-## Reference integrity
-- Dangling references: none
-- Requirements with no flow: REQ-011, REQ-013
-- Flows missing a required state: FLOW-003 (no error state, no N/A given)
-- Critical findings with no test: none
-```
-
-### `10-readiness.md`
-
-The most important file in the run. `report.html` renders the same content (§9).
-
-```markdown
-# Readiness Report
-
-## Verdict: `CLARIFY`
-<One paragraph. What blocks it, how many items that blocks, and the single
-strongest piece of evidence for the verdict. State which GATE 2 condition applies.>
-
-## Blocking questions
-| Q | Question | Blocks |
-|---|---|---|
-| Q-006 | What is a "working day"? | 6 items |
-
-<Name the cheapest-to-answer, highest-leverage one explicitly.>
-
-## Findings by severity
-```
-Critical  0   ← all resolved in round 1
-High     12   ← fix before implementation
-Medium   14   ← fix before release
-Low       4   ← track
-```
-
-### High-risk findings
-| ID | Finding | Type | Basis |
-|---|---|---|---|
-| RISK-001 | <finding> | product | inference |
-
-## Coverage
-| Metric | Value | |
-|---|---|---|
-| Requirements with a flow | 13 / 15 | 87% |
-| Flows with empty + loading + error | 3 / 4 | 75% |
-| Requirements with a test | 9 / 15 | 60% |
-| Questions resolved | 4 / 12 | 33% |
-| Assumptions validated | 2 / 8 | 25% |
-| Tests that can state an expected result | 5 / 11 | 45% |
-
-**Coverage measures whether we looked, not whether the thing is good.** <One line
-applying that to these specific numbers.>
-
-## Untested assumptions
-| ASSUMP | Supports | If wrong |
-|---|---|---|
-
-## Product readiness
-<Ready / not ready, then the product-level gaps: is the problem sound, is scope
-bounded, does any requirement actually serve the stated problem?>
-
-## UX readiness
-<Ready / not ready, then: empty, loading, error, recovery, accessibility.>
-
-## What we still don't know
-<Known unknowns. Not findings, not risks — open uncertainty. If this section is
-empty, you have not been honest.>
-
-## Recommended next actions
-1. **<Action>** — <who>, <effort>. Unblocks <what>.
-<Cap at 5–7, ordered. A list of thirty has no next action.>
-
-## How to read this report
-| Label | Means |
-|---|---|
-| Evidence | Quoted or cited from the source |
-| Inference | Reasoned from the source; reasoning shown |
-| Assumption | A gap filled without support — unverified |
-| Recommendation | A judgement about what should happen |
-| Unresolved | Nobody has answered this yet |
-
-<Closing paragraph: this is an AI analysis of a document. It finds what the document
-fails to say. It cannot tell you what your users need. Name the specific questions
-here that require talking to real people.>
-```
+**`FLOW-*` and `STATE-*` IDs are referenced but never filed.** Flows and states are
+Phase A analysis (§3). They earn IDs so tests and edge cases can point at them, and
+those IDs must stay stable across a resumed run — but no `flows.md` exists. If a user
+asks to see the state matrix, print it in chat.
 
 ---
 
@@ -1513,8 +1303,18 @@ does not authorize following a link to a third-party site.
 
 ### Procedure
 
-1. **Load requirements.** Read `flowbreaker/`. If flows and states are missing, stop
-   — you cannot evaluate coverage against requirements you don't have.
+1. **Load what exists.** Read `flowbreaker/` — `decisions.md` for the settled product
+   decisions and open questions, `tests.md` and `edge-cases.md` for the `TEST-*`,
+   `EDGE-*`, `FLOW-*` and `STATE-*` IDs they reference.
+
+   **Flows and states are not on disk** — they are Phase A analysis (§3), and a
+   previous run's chat is gone. The IDs survive in `tests.md`; the flows themselves do
+   not. So reconstruct them from the requirements and `decisions.md` before writing
+   any spec, reusing the existing IDs exactly — a `FLOW-002` that means something
+   different from last run corrupts every reference pointing at it (§4).
+
+   If `flowbreaker/` is empty or absent, stop. You cannot evaluate coverage against
+   requirements you don't have; run `review` first and say why.
 2. **Write `prototype/test-plan.md`** — every `FLOW-*` and `STATE-*` mapped to how it
    would be verified, and which ones cannot be verified automatically (visual
    design, copy tone, genuine accessibility judgement).

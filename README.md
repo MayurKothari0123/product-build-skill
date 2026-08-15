@@ -73,7 +73,7 @@ Answer the four, re-run, and it produces a verdict that argues with you:
 
 Every artifact behind that verdict is committed here:
 **[examples/01-leave-request-approval/](examples/01-leave-request-approval/)** — the input PRD,
-and the eleven Markdown files FlowBreaker generated alongside the report.
+and the four Markdown files FlowBreaker generated alongside the report.
 
 ---
 
@@ -156,16 +156,23 @@ mkdir -p .claude/skills/flowbreaker && cp SKILL.md .claude/skills/flowbreaker/SK
 
 ### Modes
 
-| Mode | For | Runs |
+| Mode | Fires when you say | Runs |
 |---|---|---|
-| `quick` | A rough idea or small feature. ~10 min. | Restate → top 5 questions → likely edge cases |
-| `review` | A real PRD. **Default.** ~20–30 min. | The full 9-step workflow below |
-| `prototype` | A built prototype + approved requirements | Test plan, Playwright specs, findings |
+| `build` | *"build X"*, *"implement X"*, *"add X"* | ≤3 questions, then it builds. ~2 min. |
+| `quick` | *"sanity-check this"*, a rough idea | Restate → top 5 questions → likely edge cases. ~10 min. |
+| `review` | *"review docs/prd.md"*. **Default for a document.** | The full 9-step workflow below. ~20–30 min. |
+| `prototype` | *"check my prototype at localhost:3000"* | Test plan, Playwright specs, findings |
 
-```
-Follow SKILL.md in quick mode: "add CSV export to the reports page"
-Follow SKILL.md prototype mode against http://localhost:3000
-```
+**It infers the mode — you never pick one.** It states which it chose in a line so you can
+correct it, then goes.
+
+**`build` is the point of the whole thing.** Every other mode fires once you already know you
+have a spec problem, which is when you need help least. `build` fires when someone types *"build
+leave approval"* into a coding agent that's about to silently decide managers can approve their
+own requests, that sick leave shows on the team calendar, and that a request nobody touches sits
+there forever. It asks up to three questions — only ones where a wrong answer is expensive to
+reverse — records them, and builds with the edge cases already handled. Can't get under three
+questions? Then it's a spec problem, and it says so and offers `review`.
 
 **Input:** anything readable — a PRD, user stories, acceptance criteria, a Notion export, a
 meeting transcript, three paragraphs in the chat. Structure helps but isn't required; *absence*
@@ -175,21 +182,28 @@ of structure is itself a finding it reports.
 
 ## How it works
 
-Nine steps, with two gates that can halt the run.
+Nine steps, two gates, and **two phases**. Phase A is conversation and writes nothing. Phase B
+writes what outlives the session.
 
-| | Step | Produces |
-|---|---|---|
-| 1 | **Restate the problem** — in its own words, for you to confirm | `00-problem-brief.md` |
-| 2 | **Audit the document** — contradictions, undefined terms, unfalsifiable requirements | `03-prd-audit.md` |
-| 3 | **Generate and prioritize questions** | `02-questions.md` |
-| | 🚦 **GATE 1** — if any question is `critical`, it **stops here** and asks | |
-| 4 | **Roles and permissions** — who can do what, to whose data | `04-roles-permissions.md` |
-| 5 | **Flow audit and state generation** — every state you didn't write | `05-flows.md` |
-| 6 | **Edge cases** — with likelihood and impact | `06-edge-cases.md` |
-| 7 | **Acceptance criteria review** — assessed, then rewritten testable | `07-acceptance-review.md` |
-| 8 | **Test cases** — traceable and prioritized | `08-tests.md` |
-| 9 | **Traceability and readiness** | `09-traceability.md`, `10-readiness.md` |
-| | 🚦 **GATE 2** — the verdict is bound by rules, not vibes | `report.html` |
+| | Step | Phase | Produces |
+|---|---|---|---|
+| 1 | **Restate the problem** — in its own words, for you to confirm | A | — |
+| 2 | **Audit the document** — contradictions, undefined terms, unfalsifiable requirements | A | — |
+| 3 | **Ask questions** — one at a time, with options | A | — |
+| | 🚦 **GATE 1** — if any question is `critical`, it **stops here** and asks | A | |
+| 4 | **Roles and permissions** — who can do what, to whose data | A | — |
+| 5 | **Flows and states** — every state you didn't write | A | — |
+| 6 | **Edge cases** — with likelihood and impact | B | `edge-cases.md` |
+| 7 | **Acceptance criteria** — assessed, then rewritten testable | B | `acceptance.md` |
+| 8 | **Test cases** — traceable and prioritized | B | `tests.md` |
+| 9 | **Decisions and readiness** | B | `decisions.md`, `report.html` |
+| | 🚦 **GATE 2** — the verdict is bound by rules, not vibes | B | |
+
+Steps 1–5 happen in chat because you're *right there* — filing a question to disk while
+simultaneously asking it in chat is the same fact written twice, and a directory of eleven files
+is a worse way to answer four questions than four questions are. Roles, permissions, flows and
+states are analysis, not deliverables: the permission matrix exists so its `undefined` cells
+become findings, and nobody has ever reopened one.
 
 **GATE 1** is the difference between a review and a guess. Most tools fill an unanswered
 question with a plausible assumption and keep going, so the output looks complete and quietly
@@ -200,9 +214,8 @@ or more open `high` questions, and `PROCEED` is unavailable — no matter how go
 
 ### Answering questions
 
-Reply in conversation ("Q-001: no, escalate to skip-level") and it writes back to
-`02-questions.md`, or edit the `**Answer:**` line yourself. Statuses: `open`, `answered`,
-`assumed`, `deferred`.
+It asks one at a time, with 2–4 framed options and what each costs. You reply in chat. Statuses:
+`open`, `answered`, `assumed`, `deferred` — all recorded in `decisions.md` at the end.
 
 Say **"assume X and continue"** and it records `ASSUMP-00N` and proceeds — but it stays an
 assumption in every artifact it touches and reappears in the readiness report. It never becomes
@@ -216,26 +229,20 @@ escalates to skip-level" immediately raises: who approves for the CEO?
 
 ## Output
 
-Written to `flowbreaker/` in your repo. Markdown so it diffs in a PR, HTML so it's readable by
-people who don't live in a terminal.
-
-**The report is organized by issue; the Markdown files are organized by artifact type.** That
-split is deliberate — see [Design decisions](#design-decisions).
+Five files in `flowbreaker/`. Markdown so it diffs in a PR, HTML so it's readable by people who
+don't live in a terminal.
 
 | File | Contains |
 |---|---|
 | `report.html` | **The deliverable.** One entry per issue, self-contained, light/dark. |
-| `00-problem-brief.md` | The problem, restated. Jobs to be done. Non-goals. |
-| `01-assumptions.md` | Gaps filled without an answer — and your document's own assumptions. |
-| `02-questions.md` | The question queue. Where you write answers. |
-| `03-prd-audit.md` | Requirements, clarity ratings, contradictions, undefined terms. |
-| `04-roles-permissions.md` | Role and permission matrices. `undefined` cells are findings. |
-| `05-flows.md` | Flow audit and the state matrix. |
-| `06-edge-cases.md` | Edge-case register with likelihood and impact. |
-| `07-acceptance-review.md` | Criteria assessed and rewritten. |
-| `08-tests.md` | Test cases, traceable, prioritized. |
-| `09-traceability.md` | Requirements↔flows↔tests, plus a reference-integrity check. |
-| `10-readiness.md` | The readiness report in Markdown. |
+| `decisions.md` | Every question, its answer, and every assumption still standing. The *why is it built like this* file. |
+| `edge-cases.md` | Edge-case register with likelihood and impact. |
+| `acceptance.md` | Criteria assessed and rewritten testable. |
+| `tests.md` | Test cases, traceable, prioritized. |
+
+There's no `readiness.md` — `report.html` **is** the readiness report, and a Markdown twin of it
+would be the same content twice. Traceability isn't a file either; it's a property of the other
+four, checked at step 9 and reported in the HTML.
 
 Everything carries a stable, never-reused ID — `PROB-` `ASSUMP-` `Q-` `REQ-` `FLOW-` `STATE-`
 `EDGE-` `TEST-` `RISK-` — and every finding links to what it relates to. A question names what
@@ -260,9 +267,12 @@ a question their own previous answer would have reframed. Spotting that somethin
 is the easy half; laying out the realistic options and what each one costs is the half that
 turns a ten-minute meeting into a ten-second answer.
 
-**Questions are files, not chat scrollback.** `02-questions.md` is a queue with statuses, so a
-review is resumable three weeks later by someone who wasn't in the original session. Chat
-history isn't a work product.
+**Questions are ephemeral; answers are permanent.** "Who approves?" stops mattering the second
+it's answered — but *"manager decides, HR audits after; §5 was stale text"* is a product decision
+someone needs in four months when a new engineer asks why HR can't approve. So the asking happens
+in chat and only the answers reach disk, in `decisions.md`. The cost is real and worth stating:
+close the terminal mid-questions and the review restarts. That's the price of not writing eleven
+files to answer four questions.
 
 **Every claim is tagged `evidence`, `inference` or `assumption`** — and it's enforced in the
 artifact schema rather than requested politely in a prompt, because blurring those three is
