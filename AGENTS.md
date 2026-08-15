@@ -3,45 +3,30 @@
 Instructions for AI coding agents working in this repository.
 
 This repo contains **FlowBreaker**, a requirements and UX stress-testing skill. The
-entire skill is one file: [`SKILL.md`](SKILL.md).
+entire skill is one file: [`SKILL.md`](SKILL.md). Everything else is documentation or
+examples. Installation and usage are in the [README](README.md) — don't restate them
+here.
 
 ## Working in this repo
 
-- `SKILL.md` is the product. Everything else is documentation or examples.
-- It must stay **self-contained**. Someone downloading only that file must get a
+- `SKILL.md` must stay **self-contained**. Someone downloading only that file gets a
   fully working skill. Do not split content into sibling files it depends on.
-- Keep it under ~1,500 lines. Past that, reference material should move into a
-  `flowbreaker/` directory and the install story changes — a deliberate decision,
-  not a drift.
-- The non-negotiable rules live in §1 and are ordered first on purpose. Later
-  sections are procedure; §1 is policy.
-- `examples/*/output/` files and the root `report.html` are **golden references**. If
-  you change a template in §7 or §9, regenerate the affected example or the repo
-  starts lying about its own output format. `report.html` lives at the repo root
-  rather than under `examples/*/output/` because it is the artifact people are sent
-  a link to; the Markdown artifacts stay with their example.
+- Keep it under ~1,500 lines. Past that, an agent starts skimming and §1 is the first
+  casualty. Currently ~1,565 — over, and the overage is §7 and §9, which are 42% of
+  the file and contain no instructions. Trim there before anywhere else.
+- The non-negotiable rules live in §1 and are ordered first on purpose. Later sections
+  are procedure; §1 is policy. Rules defined elsewhere (R11 in §8, R12 in §3) carry a
+  pointer in §1 so that list stays authoritative.
 - **R11 governs the report.** Each fact appears exactly once, in the issue it belongs
-  to. If you add a section to §9, check it does not restate something an issue entry
-  already carries — that is the failure the rule exists to prevent.
-
----
-
-## The snippet to copy into YOUR project
-
-Everything above is about developing FlowBreaker. To *use* it in your own repo, add
-these lines to that repo's `AGENTS.md`:
-
-```markdown
-## Product & requirements review
-When asked to review a PRD, feature spec, user flow, or acceptance criteria —
-or when asked "what's missing here" about a product requirement —
-read ./SKILL.md and follow it exactly.
-Do not skip its clarification-question gate.
-```
-
-Then drop `SKILL.md` in that repo's root.
-
-**Keep the pointer short; leave the skill in its own file.** `AGENTS.md` loads into
-every conversation in a repository, so inlining the full skill costs tokens on every
-unrelated turn and dilutes attention while someone is fixing a CSS bug. The pointer
-costs three lines and loads the rest only when it applies.
+  to. If you add a section to §9, check it does not restate what an issue entry already
+  carries — one defect stated five ways is still one defect.
+- **R12 governs the questions.** Sequence coupled questions, frame each with real
+  options. If you add to the §6 bank, the addition needs plausible options, not just a
+  gap to point at.
+- `examples/*/output/` and the root `report.html` are **golden references**. Change a
+  template in §7 or §9 and you must regenerate the affected example, or the repo starts
+  lying about its own output format. `report.html` sits at the repo root because it is
+  the artifact people are sent a link to; the Markdown artifacts stay with their
+  example.
+- Contributions are closed (see the README's policy). This file is for authorized
+  collaborators and for the agents they run.
