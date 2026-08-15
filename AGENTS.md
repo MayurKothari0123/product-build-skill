@@ -1,0 +1,42 @@
+# AGENTS.md
+
+Instructions for AI coding agents working in this repository.
+
+This repo contains **FlowBreaker**, a requirements and UX stress-testing skill. The
+entire skill is one file: [`FLOWBREAKER.md`](FLOWBREAKER.md).
+
+## Working in this repo
+
+- `FLOWBREAKER.md` is the product. Everything else is documentation or examples.
+- It must stay **self-contained**. Someone downloading only that file must get a
+  fully working skill. Do not split content into sibling files it depends on.
+- Keep it under ~1,500 lines. Past that, reference material should move into a
+  `flowbreaker/` directory and the install story changes — a deliberate decision,
+  not a drift.
+- The non-negotiable rules live in §1 and are ordered first on purpose. Later
+  sections are procedure; §1 is policy.
+- `examples/*/output/` files are **golden references**. If you change a template in
+  §7 or §9, regenerate the affected example or the repo starts lying about its own
+  output format.
+
+---
+
+## The snippet to copy into YOUR project
+
+Everything above is about developing FlowBreaker. To *use* it in your own repo, add
+these lines to that repo's `AGENTS.md`:
+
+```markdown
+## Product & requirements review
+When asked to review a PRD, feature spec, user flow, or acceptance criteria —
+or when asked "what's missing here" about a product requirement —
+read ./FLOWBREAKER.md and follow it exactly.
+Do not skip its clarification-question gate.
+```
+
+Then drop `FLOWBREAKER.md` in that repo's root.
+
+**Keep the pointer short; leave the skill in its own file.** `AGENTS.md` loads into
+every conversation in a repository, so inlining the full skill costs tokens on every
+unrelated turn and dilutes attention while someone is fixing a CSS bug. The pointer
+costs three lines and loads the rest only when it applies.
