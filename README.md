@@ -1,10 +1,13 @@
 # FlowBreaker
 
-**A requirements and UX stress-testing skill for AI coding agents.**
+**Finds the edge cases that break in production — while they're still in a document.**
+*A requirements and UX stress-testing skill for AI coding agents.*
 
-FlowBreaker gives a coding agent the instincts of a product manager: the reflex to notice an
-undefined term, an unwritten permission rule, a flow state nobody designed — and then to *ask*
-rather than assume.
+Not the ones your spec got wrong. The ones it never mentioned: the manager who approves their
+own leave, the request nobody ever actions, the sick day that shows up on a public calendar. It
+gives a coding agent the instincts of a product manager — the reflex to notice an undefined
+term, an unwritten permission rule, a flow state nobody designed — and then to *ask* rather than
+assume.
 
 It doesn't write your PRD. It attacks it, one question at a time, and refuses to pretend an
 assumption is a fact.
@@ -70,6 +73,10 @@ Answer the four, re-run, and it produces a verdict that argues with you:
 
 **→ [Open the full readiness report](https://htmlpreview.github.io/?https://github.com/MayurKothari0123/product-build-skill/blob/main/report.html)**
 — [`report.html`](report.html), exactly as FlowBreaker generated it.
+
+**16 edge cases. 1 of them was in the source document** — and only because a question got
+answered mid-review. The other fifteen were in nobody's spec, nobody's ticket and nobody's head,
+and every one of them would have surfaced as a bug, a support thread, or a privacy incident.
 
 Every artifact behind that verdict is committed here:
 **[examples/01-leave-request-approval/](examples/01-leave-request-approval/)** — the input PRD,

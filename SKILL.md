@@ -125,7 +125,7 @@ when it is genuinely 50/50.
 
 | Mode | Trigger | Runs | Time |
 |---|---|---|---|
-| `build` | **"build X", "implement X", "add X"** — an implementation request | Steps 1–3, capped | ~2 min |
+| `build` | **"build X", "implement X", "add X"** — an implementation request | Steps 1–3, capped, then build | ~2 min |
 | `quick` | Small feature, rough idea, "sanity-check this" | Steps 1, 2 (light), 3, 6 | ~10 min |
 | `review` | A real PRD or spec. **The default for a document.** | Steps 1–9 | ~20–30 min |
 
@@ -221,18 +221,21 @@ and throw the matrix away. Nobody has ever reopened a permission matrix.
 | 6 | Edge cases | B | `edge-cases.md` | `EDGE-*` |
 | 7 | Acceptance criteria review | B | `acceptance.md` | — |
 | 8 | Test cases | B | `tests.md` | `TEST-*` |
-| 9 | Decisions, readiness, report | B | `decisions.md`, `report.html` | `RISK-*` |
+| 9 | Readiness and report | B | `report.html` | `RISK-*` |
 | — | **GATE 2** | B | — | — |
 
 **Where files go.** `flowbreaker/` at the **repository root** — not beside the source
 document. Findable in the same place every time, regardless of whether the PRD lives
 in `docs/`, `specs/` or the user's home directory.
 
-**`decisions.md` is the important one.** Every question asked, the answer given, and
-every assumption still standing. It is the "why is it built like this" file, and it is
-the only record that Phase A happened. Write it at step 9 from the conversation, not
-incrementally — but write it *first* among the step-9 outputs, because if anything is
-going to be interrupted it should not be that.
+**`decisions.md` is written at the end of every run, in every mode** — it is not a
+step. Steps are the analysis; `decisions.md` is the receipt. A `build` run that asked
+three questions and stopped still produced three product decisions, and those are
+exactly as durable as the ones a full review produces.
+
+It is the "why is it built like this" file, and the only record that Phase A happened.
+Write it from the conversation when the run ends, and write it **before** the report,
+because if anything gets interrupted it should not be that.
 
 **Traceability is not a file.** It is a property of the other four, checked at step 9
 and reported in `report.html`. Likewise there is no `readiness.md`: `report.html` is
@@ -362,7 +365,7 @@ instead of visible progress:
 **Cap the round, not the review.** No more than 7 questions in one stop-and-wait, and
 that cap is a ceiling, not a target — a single well-chosen question beats seven. The
 rest are named in one line — "six more, none blocking" — so nothing is hidden but
-nothing competes for attention now. They carry into `decisions.md` at step 9.
+nothing competes for attention now. They carry into `decisions.md` when the run ends.
 
 ### GATE 1 — the critical-question stop
 
@@ -803,8 +806,8 @@ Every file starts with this header:
 Every question asked, the answer given, and every assumption still standing. Someone
 opens this in four months to find out why the system works the way it does.
 
-Write it from the conversation at step 9, and write it **first** among the step-9
-outputs — if anything gets interrupted, it should not be this.
+Written at the end of every run, in every mode — before the report, so an interruption
+costs you the report rather than the decisions.
 
 ```markdown
 # Decisions
