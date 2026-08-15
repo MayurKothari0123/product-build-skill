@@ -1134,17 +1134,49 @@ The last one is the category most tools omit, and it is the most useful. A repor
 that ends with "here is what we still do not know" is honest; one that resolves
 everything into confident findings is lying somewhere.
 
+### R9 — each fact appears exactly once
+
+**The report is organized by issue, not by artifact type.** This is the rule most
+easily broken by accident, because the nine-step workflow produces questions, then
+requirements, then flows, then edge cases, then tests — and writing the report in that
+order feels natural. It is wrong.
+
+A single defect surfaces in every step. An undefined term is an open question, *and* a
+requirement rated ambiguous, *and* an edge case, *and* a blocked test, *and* a
+load-bearing assumption. Given one section per artifact type, that one defect appears
+five times under five ID prefixes, and the reader has no way to tell it is one problem
+being described five ways. Fifty rows across seven tables can be six actual issues.
+
+So: **one entry per issue**, with every ID it touches attached to that entry as a
+facet. `Q-006`, `RISK-003`, `REQ-002`, `EDGE-002` and `TEST-013` are five views of "no
+one defined *working day*" — they belong in one block, read once.
+
+Sorting by artifact type organizes the report around the process that produced it.
+Sorting by issue organizes it around the person reading it. Only the second one gets
+read to the end.
+
+The per-artifact tables still exist — in the Markdown files, which is where reference
+material belongs. The report links to them; it does not reproduce them.
+
 ### Required sections
 
-1. Verdict + one-line reason
-2. Blocking questions (the critical `Q-*`, verbatim)
-3. Findings by severity
-4. Coverage
-5. Untested assumptions
-6. Product readiness — is the problem/scope/model sound?
-7. UX readiness — are the states, errors, recovery and accessibility handled?
-8. Recommended next actions, in order
-9. What we still don't know
+1. **Verdict** + one-line reason
+2. **At a glance** — severity counts, coverage with denominators, product and UX
+   readiness as one line each
+3. **Blocking questions** — verbatim, **only when a `critical` question is open**.
+   That is the GATE 1 report, where there is no analysis yet to attach questions to.
+   Once the criticals are answered, every remaining question belongs inside the issue
+   it concerns; a standing blocking-questions section duplicates them all by R9. The
+   ordered action list at §5 is what tells a reader where to start.
+4. **Issues** — one entry per distinct problem, all its IDs attached
+5. **Recommended next actions**, in order
+6. **What we still don't know** — only unknowns that *no question can resolve*. If
+   answering a `Q-` would settle it, it belongs in §3 and repeating it here is R9
+   again in miniature.
+
+Nothing else. No requirements table, no flow matrix, no edge-case register, no test
+list, no assumptions table — those are `03-`, `05-`, `06-`, `08-` and `01-`
+respectively, and a reader who wants them will open them.
 
 ### Recommended next actions
 
@@ -1237,6 +1269,20 @@ Write `flowbreaker/report.html` as one self-contained file. Constraints:
   .q dl{margin:0;font-size:.88rem} .q dt{color:var(--muted);font-size:.75rem;
     text-transform:uppercase;letter-spacing:.04em;margin-top:.6rem}
   .q dd{margin:.15rem 0 0}
+  .issue{background:var(--surface);border:1px solid var(--border);border-radius:.4rem;
+    padding:.9rem 1rem;margin:.75rem 0;border-left:3px solid var(--border)}
+  .issue.critical{border-left-color:var(--crit)} .issue.high{border-left-color:var(--high)}
+  .issue.medium{border-left-color:var(--med)} .issue.low{border-left-color:var(--low)}
+  .issue h3{margin:.4rem 0 .6rem;font-size:1rem}
+  .issue .type{font:600 .7rem/1 var(--mono);color:var(--muted);text-transform:uppercase;
+    letter-spacing:.04em}
+  .issue dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:.3rem .9rem;font-size:.88rem}
+  .issue dt{color:var(--muted);font-size:.72rem;text-transform:uppercase;
+    letter-spacing:.04em;white-space:nowrap;padding-top:.15rem}
+  .issue dd{margin:0}
+  .issue .note{margin:.7rem 0 0;font-size:.85rem;color:var(--muted);font-style:italic}
+  @media (max-width:32rem){.issue dl{grid-template-columns:1fr}
+    .issue dt{padding-top:.5rem}}
   .bar{height:.4rem;background:var(--border);border-radius:.2rem;overflow:hidden;margin-top:.3rem}
   .bar i{display:block;height:100%;background:var(--low)}
   details{background:var(--surface);border:1px solid var(--border);border-radius:.4rem;
@@ -1300,30 +1346,48 @@ Write `flowbreaker/report.html` as one self-contained file. Constraints:
 </section>
 
 <section>
-  <h2>Requirements</h2>
-  <p class="lede">Every requirement found, how clear it is, and what it links to.</p>
-  <div class="scroll"><table>
-    <tr><th>ID</th><th>Requirement</th><th>Clarity</th><th>Basis</th><th>Flows</th><th>Tests</th><th>Open</th></tr>
-    <tr><td class="id">{{REQ-001}}</td><td>{{statement}}</td><td>{{clarity}}</td>
-        <td><span class="tag evidence">evidence</span></td><td class="id">{{flows}}</td>
-        <td class="id">{{tests}}</td><td class="id">{{questions}}</td></tr>
-  </table></div>
-</section>
+  <h2>Issues</h2>
+  <p class="lede">{{n}} distinct problems, most severe first. Each appears once, with
+    every artifact it touches. Full per-artifact tables are in the Markdown files.</p>
 
-<!-- Roles & permissions · Flows & states · Edge cases · Tests · Traceability · Risks
-     follow the same pattern: h2, one-line lede, then a scrollable table.
-     Put long detail inside <details>. -->
-
-<section>
-  <h2>What we still don't know</h2>
-  <p class="lede">Known unknowns. Not findings, not risks — open uncertainty.</p>
-  <ul>{{list}}</ul>
+  <!-- Repeat per issue. Order: severity, then blast radius.
+       Emit only the facet rows that exist — an issue with no blocked test omits
+       that row entirely rather than printing "none". -->
+  <div class="issue">
+    <span class="tag {{severity}}">{{severity}}</span>
+    <span class="id">{{RISK-00X}}</span> <span class="type">{{product|ux|technical|compliance|privacy}}</span>
+    <h3>{{issue in one line — what is wrong, not what to do}}</h3>
+    <dl>
+      <dt>Open question</dt>
+        <dd><code>{{Q-00X}}</code> — {{question}}. Blocks {{n}} items.</dd>
+      <dt>Makes ambiguous</dt>
+        <dd><code>{{REQ-00X}}</code> {{short statement}}</dd>
+      <dt>Undefined state</dt>
+        <dd><code>{{STATE-00X}}</code> {{what is undefined}}</dd>
+      <dt>Edge case</dt>
+        <dd><code>{{EDGE-00X}}</code> {{case}}</dd>
+      <dt>Blocked test</dt>
+        <dd><code>{{TEST-00X}}</code> — cannot state an expected result until
+            <code>{{Q-00X}}</code> is answered</dd>
+      <dt>Rests on</dt>
+        <dd><code>{{ASSUMP-00X}}</code> {{assumption}} — if wrong, {{consequence}}</dd>
+    </dl>
+    <p class="note">{{Why this one matters, or what makes it cheap. One sentence.
+      Omit if the issue speaks for itself — a note on every issue is noise.}}</p>
+  </div>
 </section>
 
 <section>
   <h2>Recommended next actions</h2>
   <p class="lede">In order. Each names who and what it unblocks.</p>
   <ol>{{list}}</ol>
+</section>
+
+<section>
+  <h2>What we still don't know</h2>
+  <p class="lede">Open uncertainty that no question above can settle — these need a
+    person, a measurement or a decision, not an answer from the document.</p>
+  <ul>{{list — omit anything an open Q- would resolve; that is a duplicate}}</ul>
 </section>
 
 <div class="legend">

@@ -51,12 +51,12 @@ Answer the four, re-run, and it produces a verdict that argues with you:
 > Low       4   ← track
 > ```
 
-**→ [Open the full readiness report](https://htmlpreview.github.io/?https://github.com/MayurKothari0123/product-build-skill/blob/main/examples/01-leave-request-approval/output/report.html)**
-— the actual generated `report.html`, rendered live.
+**→ [Open the full readiness report](https://htmlpreview.github.io/?https://github.com/MayurKothari0123/product-build-skill/blob/main/report.html)**
+— [`report.html`](report.html), exactly as FlowBreaker generated it.
 
 Every artifact behind that verdict is committed here:
 **[examples/01-leave-request-approval/](examples/01-leave-request-approval/)** — the input PRD,
-and all twelve files FlowBreaker generated from it.
+and the eleven Markdown files FlowBreaker generated alongside the report.
 
 ---
 
@@ -202,9 +202,12 @@ escalates to skip-level" immediately raises: who approves for the CEO?
 Written to `flowbreaker/` in your repo. Markdown so it diffs in a PR, HTML so it's readable by
 people who don't live in a terminal.
 
+**The report is organized by issue; the Markdown files are organized by artifact type.** That
+split is deliberate — see [Design decisions](#design-decisions).
+
 | File | Contains |
 |---|---|
-| `report.html` | **The deliverable.** Self-contained, offline, light/dark. |
+| `report.html` | **The deliverable.** One entry per issue, self-contained, light/dark. |
 | `00-problem-brief.md` | The problem, restated. Jobs to be done. Non-goals. |
 | `01-assumptions.md` | Gaps filled without an answer — and your document's own assumptions. |
 | `02-questions.md` | The question queue. Where you write answers. |
@@ -249,6 +252,15 @@ coverage metrics are the easiest thing in the report to misread.
 PRD and absurd for a CSV export button — and a tool people skip for small work stops being a
 habit. It shares IDs and files with `review`, so a quick run upgrades later instead of being
 thrown away.
+
+**The report is organized by issue, not by artifact type.** One defect surfaces at every step of
+the workflow — an undefined term is an open question, *and* an ambiguous requirement, *and* an
+edge case, *and* a blocked test, *and* a load-bearing assumption. A section per artifact type
+prints that one defect five times under five ID prefixes, and the reader can't tell it's one
+problem. So the report gives each issue a single entry with every ID attached as a facet, and
+the per-artifact tables stay in the Markdown files where reference material belongs. Sorting by
+artifact organizes a report around the process that produced it; sorting by issue organizes it
+around the person reading it.
 
 **One file, no dependencies.** Portability across agents was worth more than features that would
 require a runtime. It's plain Markdown, so it works anywhere and you can read the whole thing
