@@ -1,6 +1,6 @@
 ---
 name: flowbreaker
-description: Stress-test product requirements, PRDs, feature specs and user flows before implementation. Finds ambiguity, contradictions, missing states, permission gaps and edge cases; asks prioritized clarification questions; produces traceable test cases and a readiness report. Use when reviewing a PRD, auditing a feature spec, asking "what's missing here", or evaluating a prototype against requirements.
+description: Stress-test product requirements, PRDs, feature specs and user flows before implementation. Finds ambiguity, contradictions, missing states, permission gaps and edge cases; asks prioritized clarification questions one at a time; produces traceable test cases and a readiness report. Use when reviewing a PRD, auditing a feature spec, asking "what's missing here", or before building a feature from a rough request.
 ---
 
 # FlowBreaker
@@ -21,7 +21,6 @@ a product specification *before* anyone writes code.
 - A PRD, feature spec, user story set, or acceptance criteria needs review.
 - Someone asks "what's missing here?" about a product requirement.
 - A rough feature idea needs interrogating before it becomes a spec.
-- A prototype exists and needs evaluating against its requirements.
 
 **Do NOT use FlowBreaker when:**
 
@@ -95,9 +94,12 @@ No "readiness: 72/100". Report findings by severity, separately, with the
 reasoning attached. A number invites people to ship on a threshold they don't
 understand.
 
-**R9 — Browser and external actions require explicit approval.**
-See §10. Never authenticate, never use credentials, never take an irreversible
-external action, never access private accounts or restricted content.
+**R9 — Never take an external or irreversible action.**
+FlowBreaker reads documents and talks to the user. It does not authenticate, use
+credentials (including credentials the user offers), access private accounts, browse
+to third-party sites, touch production, or take any irreversible external action —
+purchases, sends, deletes, deploys, posts. In `build` mode you write code; you still
+do not deploy it.
 
 **R10 — Ask in chat; write down what was decided.**
 Phase A (restate, audit, ask, roles, flows) is conversation and writes nothing —
@@ -126,7 +128,6 @@ when it is genuinely 50/50.
 | `build` | **"build X", "implement X", "add X"** — an implementation request | Steps 1–3, capped | ~2 min |
 | `quick` | Small feature, rough idea, "sanity-check this" | Steps 1, 2 (light), 3, 6 | ~10 min |
 | `review` | A real PRD or spec. **The default for a document.** | Steps 1–9 | ~20–30 min |
-| `prototype` | A built prototype + approved requirements | §10 | varies |
 
 **`quick`** exists so that small work still gets checked. Restate the problem,
 extract requirements, produce the top five questions, list the edge cases most likely
@@ -169,10 +170,6 @@ If the request is large enough that three questions cannot cover it, do not quie
 build anyway. Say what you would need to ask, and let them choose `review`.
 
 **`review`** is the full lifecycle in §3.
-
-**`prototype`** requires approved requirements — either an existing `flowbreaker/`
-directory or requirements the user supplies. If neither exists, run `review` first
-and say why.
 
 ---
 
@@ -961,7 +958,7 @@ One of five. Pick the first that applies, reading top to bottom.
 | `CLARIFY` | Any critical question open, critical risk unmitigated, critical requirement contradictory/missing, **or 3+ open `high` questions that block requirements** | Answer the blocking questions. Nothing else is worth doing first. |
 | `REDESIGN` | Questions are answered but the flows have structural problems — dead ends, unresolvable permission conflicts, a model that can't express the requirements | Rework the flow or model before speccing further |
 | `USER-TEST` | Spec is coherent, but rests on unvalidated assumptions about user behaviour or needs | Talk to real users about the specific assumptions listed |
-| `PROTOTYPE` | Spec is coherent and the risk is interaction design rather than logic | Build a throwaway prototype and run `prototype` mode |
+| `PROTOTYPE` | Spec is coherent and the risk is interaction design rather than logic | Build a throwaway prototype and put it in front of people. The remaining risk is not answerable on paper. |
 | `PROCEED` | No critical questions open, no unmitigated critical risks, coverage adequate, assumptions acknowledged | Implement — with the listed assumptions carried into the plan |
 
 GATE 2 (§3) is absolute: `PROCEED` is unavailable while any critical item is open,
@@ -1272,93 +1269,3 @@ Write `flowbreaker/report.html` as one self-contained file. Constraints:
 
 </div></body></html>
 ```
-
----
-
-## §10 — Prototype mode
-
-Requires approved requirements — an existing `flowbreaker/` directory or
-requirements the user supplies. Without them there is nothing to evaluate against;
-run `review` first and say why.
-
-### Hard limits
-
-These are limits, not preferences. They hold even when the user asks otherwise;
-if asked to exceed them, decline and explain what you can do instead.
-
-**Never:**
-- Authenticate, log in, or use credentials — including credentials the user offers.
-- Access private accounts or content behind a login.
-- Scrape restricted content or bypass access controls.
-- Take irreversible external actions: purchases, sends, deletes, deploys, posts.
-- Touch a production system.
-- Submit real personal data to any form.
-
-**Only with explicit, specific user approval:**
-- Navigating a local or explicitly-provided prototype URL.
-- Running the generated test specs.
-
-Approval for one action is not approval for the next. "Yes, check localhost:3000"
-does not authorize following a link to a third-party site.
-
-### Procedure
-
-1. **Load what exists.** Read `flowbreaker/` — `decisions.md` for the settled product
-   decisions and open questions, `tests.md` and `edge-cases.md` for the `TEST-*`,
-   `EDGE-*`, `FLOW-*` and `STATE-*` IDs they reference.
-
-   **Flows and states are not on disk** — they are Phase A analysis (§3), and a
-   previous run's chat is gone. The IDs survive in `tests.md`; the flows themselves do
-   not. So reconstruct them from the requirements and `decisions.md` before writing
-   any spec, reusing the existing IDs exactly — a `FLOW-002` that means something
-   different from last run corrupts every reference pointing at it (§4).
-
-   If `flowbreaker/` is empty or absent, stop. You cannot evaluate coverage against
-   requirements you don't have; run `review` first and say why.
-2. **Write `prototype/test-plan.md`** — every `FLOW-*` and `STATE-*` mapped to how it
-   would be verified, and which ones cannot be verified automatically (visual
-   design, copy tone, genuine accessibility judgement).
-3. **Write Playwright specs** to `prototype/specs/`, one file per flow, TypeScript.
-   Each test names the `TEST-*`, `REQ-*` and `FLOW-*` it verifies in a comment, so a
-   failure points back to a requirement rather than a selector.
-4. **Static findings pass** — if the user points you at prototype source, read it and
-   report missing states, unhandled errors, permission checks done only in the UI,
-   and accessibility problems visible in markup (missing labels, no focus states,
-   colour-only signalling, missing landmarks).
-5. **Write `prototype/findings.md` and the coverage report** — which requirements are
-   verified by a spec, which need a human, which cannot be checked at all.
-
-**You write the specs; the human runs them.** Report what the specs *would* verify,
-never what they *did* verify. If the user pastes results back, incorporate them and
-mark those requirements verified with the run as evidence.
-
-### Spec skeleton
-
-```ts
-import { test, expect } from '@playwright/test';
-
-// TEST-011 · REQ-004, REQ-005 · FLOW-002 · EDGE-004
-// Verifies: a pending request whose approver is deactivated is not silently orphaned.
-// NOTE: expected behaviour is undefined in the spec (Q-002). This test asserts that
-// SOME defined behaviour exists — it will need updating once Q-002 is answered.
-test('pending request with deactivated approver is not orphaned', async ({ page }) => {
-  await page.goto('/requests/pending');
-  // ...
-  await expect(page.getByRole('status')).not.toHaveText(/pending review/i);
-});
-```
-
-Where expected behaviour is undefined, say so in the test and assert the weaker
-property. A test that invents an expected result is worse than no test — it
-launders an assumption into a passing build (R3).
-
-### Accessibility checks worth writing
-
-Keyboard-only completion of each flow; visible focus on every interactive element;
-form inputs with associated labels; images with alt text; error messages
-programmatically associated with their field; no information conveyed by colour
-alone; heading order; landmark regions.
-
-Automated checks catch perhaps a third of real accessibility problems. Say so in
-the report rather than implying a clean run means an accessible product.
-

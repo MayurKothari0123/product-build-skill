@@ -161,7 +161,6 @@ mkdir -p .claude/skills/flowbreaker && cp SKILL.md .claude/skills/flowbreaker/SK
 | `build` | *"build X"*, *"implement X"*, *"add X"* | ≤3 questions, then it builds. ~2 min. |
 | `quick` | *"sanity-check this"*, a rough idea | Restate → top 5 questions → likely edge cases. ~10 min. |
 | `review` | *"review docs/prd.md"*. **Default for a document.** | The full 9-step workflow below. ~20–30 min. |
-| `prototype` | *"check my prototype at localhost:3000"* | Test plan, Playwright specs, findings |
 
 **It infers the mode — you never pick one.** It states which it chose in a line so you can
 correct it, then goes.
@@ -299,21 +298,6 @@ around the person reading it.
 **One file, no dependencies.** Portability across agents was worth more than features that would
 require a runtime. It's plain Markdown, so it works anywhere and you can read the whole thing
 before trusting it.
-
----
-
-## Prototype mode
-
-Needs approved requirements. Produces a test plan mapped to your flows, Playwright specs
-(TypeScript) under `flowbreaker/prototype/specs/`, and a coverage report of what stays
-unverifiable. Each spec names the `TEST-`, `REQ-` and `FLOW-` it verifies, so a failure points at
-a requirement instead of a selector.
-
-**FlowBreaker writes specs. You run them.** It reports what specs *would* verify, never what they
-*did*. It will never authenticate or use credentials (including ones you offer), reach content
-behind a login, bypass access controls, take irreversible external actions, or touch production.
-Approval for one action isn't approval for the next. Paste results back and it marks those
-requirements verified, with the run as evidence.
 
 ---
 
