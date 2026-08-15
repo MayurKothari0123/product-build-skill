@@ -20,7 +20,7 @@ entire skill is one file: [`SKILL.md`](SKILL.md).
   starts lying about its own output format. `report.html` lives at the repo root
   rather than under `examples/*/output/` because it is the artifact people are sent
   a link to; the Markdown artifacts stay with their example.
-- **R9 governs the report.** Each fact appears exactly once, in the issue it belongs
+- **R11 governs the report.** Each fact appears exactly once, in the issue it belongs
   to. If you add a section to §9, check it does not restate something an issue entry
   already carries — that is the failure the rule exists to prevent.
 

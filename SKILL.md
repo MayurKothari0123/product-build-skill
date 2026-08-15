@@ -102,7 +102,14 @@ external action, never access private accounts or restricted content.
 **R10 — Write artifacts to disk as you go.**
 Do not hold a review in conversation. Each step writes its file under
 `flowbreaker/` before the next step begins, so the work survives the session and
-can be resumed, diffed and reviewed by someone else.
+can be resumed, diffed and reviewed by someone else. The files are the record; the
+conversation is the interface (R12). Neither substitutes for the other.
+
+**R11 — Each fact appears exactly once.** Defined in §8. The report is organized by
+issue, not by artifact type; one defect stated five ways is still one defect.
+
+**R12 — Ask like a person, not a form.** Defined in §3. Sequence coupled questions,
+frame every one with real options, and recompute after each answer.
 
 ---
 
@@ -218,31 +225,94 @@ format in §7.
 
 Rules for this step:
 
-- **Batch size: maximum 7 per round**, where a *round* is one stop-and-wait. Do not
-  emit two rounds back to back to dodge the cap. Questions beyond seven go into a
-  "deferred to the next batch" list in `02-questions.md` — visible, so nothing is
-  lost, but not competing for attention now. More than seven at once and people stop
-  reading, which costs you the first seven too.
 - **Deduplicate ruthlessly.** Three questions about the same underlying unknown
   are one question.
-- **Group by category** so related questions can be answered together.
 - **Every question states what it blocks** (`blocks: ["REQ-004", "FLOW-002"]`) and
   why it matters. A question with no `blocks` and no consequence is not a
   question, it is curiosity — delete it (R6).
-- **Offer options where useful**, but never force a choice. Always allow free text.
 - **Assign risk honestly.** Reserve `critical` for questions where building the
   wrong answer means rework, a security hole, a compliance problem, or shipping
   something users cannot use. If everything is critical, nothing is.
 
+### R12 — ask like a person, not a form
+
+A list of fifteen questions is a form. Nobody fills in a form. Ask the way a good
+product manager asks in a room: one thing at a time, with the options already framed,
+listening to the answer before choosing what to ask next.
+
+**Sequence coupled questions; batch only independent ones.**
+
+This is the rule that matters, and it is not a style preference. Questions are
+*coupled* when the answer to one changes, deletes, or creates another. Asking those
+together is incoherent — you are asking someone to answer a question that their own
+previous answer would have reframed.
+
+> *"Can a manager approve their own request?"* → answered **escalate to skip-level** →
+> which immediately creates *"who approves for the CEO, who has no skip-level?"*
+>
+> That second question **did not exist** before the first was answered. Presenting both
+> at once is impossible; presenting the second alongside a different answer to the
+> first ("no, HR handles it") makes it noise.
+
+So: work out the dependency order first, ask the question that unblocks the most, then
+**recompute** before asking anything else. Genuinely independent questions — ones whose
+answers cannot affect each other — may be batched, maximum 3 or 4. Never more, and
+never as a wall of text.
+
+**Frame the choice; don't just report the gap.** Spotting that something is undefined
+is the easy half. The valuable half is laying out the realistic options and what each
+one costs, so the answer takes ten seconds instead of a meeting. Every question should
+carry 2–4 concrete options with their consequence:
+
+```
+Q-006 · high · Can leave be requested for past dates?
+
+  a) Yes, any past date        — needed for sick leave, which is
+                                 almost always recorded after the fact
+  b) Yes, within N days        — the common compromise; needs N
+  c) No, future only           — breaks the sick-leave case entirely
+  d) Something else — tell me
+
+  Blocks REQ-002, REQ-006, TEST-009, TEST-013 (6 items)
+```
+
+Options are a starting point, never a constraint — **always accept free text**, and
+never present a closed set as if it were exhaustive. If none of the options is right,
+that is itself a finding about the problem being harder than the document implies.
+
+**Use the host's native question UI when one exists.** In agents that offer structured
+multiple-choice prompts, ask through that rather than as prose; it is faster to answer
+and the answer comes back unambiguous. Where there is none, plain text as above. The
+questions are identical either way.
+
+**Say what each answer changed.** After every answer, state briefly what it resolved,
+what it created, and what is now next. Resolving a critical usually exposes the next
+layer down, and a user who cannot see that happening experiences an endless list
+instead of visible progress:
+
+> *Q-001 answered — REQ-004 moves contradictory → clear, FLOW-003 is retired.*
+> *It also raises a new one: the CEO has no skip-level. That's next.*
+
+**Cap the round, not the review.** No more than 7 questions in one stop-and-wait, and
+that cap is a ceiling, not a target — a single well-chosen question beats seven. The
+rest go to a visible "next batch" list in `02-questions.md`, so nothing is lost but
+nothing competes for attention now.
+
 ### GATE 1 — the critical-question stop
 
-**If any question is `risk: critical`, stop here.** Present the critical batch,
-say plainly that you are not proceeding until they are resolved, and wait.
+**If any question is `risk: critical`, stop here.** Say plainly that you are not
+proceeding until the criticals are resolved, then ask them per R12 — the
+highest-leverage one first, framed with options, recomputing after each answer.
 
-Present the `high` and below questions at the same time, clearly marked as
-non-blocking. The user is already reading; a second interruption later to ask
-questions you had ready now is a worse use of their attention than one longer list
-with the blocking items called out.
+Say how many criticals there are before asking the first one. "4 critical questions
+block flow analysis; here's the first" is a progress bar. Asking one question with no
+sense of how many follow feels like an interrogation with no end.
+
+Hold the `high` and below questions until the criticals are settled. They are often
+reframed or deleted by a critical answer, and asking a question that a later answer
+erases spends the user's attention on nothing. The exception is a `high` question that
+is genuinely independent of every open critical and cheap to answer in passing — those
+can ride along, clearly marked non-blocking.
 
 Do not generate flows, states, edge cases or tests on top of an unresolved
 critical unknown. That is the failure this entire skill exists to prevent — the
@@ -641,6 +711,11 @@ Before you present a batch, drop any question that fails these:
    genuinely critical, report five. The ratio is a prompt to check yourself, not a
    quota to hit — demoting a real critical to satisfy a heuristic is exactly the
    silent-assumption failure this skill exists to prevent.
+7. **Can you offer 2–4 real options?** If you cannot name a single plausible answer,
+   you may not understand the question well enough to ask it. Work out what the
+   realistic choices are first — that framing is most of the value (R12).
+8. **Would this answer be changed by another open question?** If yes, it is coupled —
+   ask the other one first and recompute. Do not ask both (R12).
 
 ---
 
@@ -1134,7 +1209,7 @@ The last one is the category most tools omit, and it is the most useful. A repor
 that ends with "here is what we still do not know" is honest; one that resolves
 everything into confident findings is lying somewhere.
 
-### R9 — each fact appears exactly once
+### R11 — each fact appears exactly once
 
 **The report is organized by issue, not by artifact type.** This is the rule most
 easily broken by accident, because the nine-step workflow produces questions, then
@@ -1166,12 +1241,12 @@ material belongs. The report links to them; it does not reproduce them.
 3. **Blocking questions** — verbatim, **only when a `critical` question is open**.
    That is the GATE 1 report, where there is no analysis yet to attach questions to.
    Once the criticals are answered, every remaining question belongs inside the issue
-   it concerns; a standing blocking-questions section duplicates them all by R9. The
+   it concerns; a standing blocking-questions section duplicates them all by R11. The
    ordered action list at §5 is what tells a reader where to start.
 4. **Issues** — one entry per distinct problem, all its IDs attached
 5. **Recommended next actions**, in order
 6. **What we still don't know** — only unknowns that *no question can resolve*. If
-   answering a `Q-` would settle it, it belongs in §3 and repeating it here is R9
+   answering a `Q-` would settle it, it belongs in §3 and repeating it here is R11
    again in miniature.
 
 Nothing else. No requirements table, no flow matrix, no edge-case register, no test

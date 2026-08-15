@@ -2,9 +2,12 @@
 
 **A requirements and UX stress-testing skill for AI coding agents.**
 
-FlowBreaker doesn't write your PRD. It attacks it — finding the ambiguity, contradictions,
-missing states, permission gaps and edge cases that turn into rework three sprints later. It
-asks the questions your spec can't answer, and refuses to pretend an assumption is a fact.
+FlowBreaker gives a coding agent the instincts of a product manager: the reflex to notice an
+undefined term, an unwritten permission rule, a flow state nobody designed — and then to *ask*
+rather than assume.
+
+It doesn't write your PRD. It attacks it, one question at a time, and refuses to pretend an
+assumption is a fact.
 
 One Markdown file. Works with Claude Code, Codex, Cursor, Gemini CLI, Aider, or any agent that
 reads files. No dependencies, no build step, no version to pin.
@@ -27,13 +30,27 @@ And forty lines later, also fine:
 
 Two people wrote two sections. Both got reviewed. Nobody noticed. FlowBreaker's output:
 
-> ### C-1 — Who approves? *(critical)*
-> These cannot both describe the sole approver. Three readings are possible and the document
-> supports none of them over the others. *Blocks: REQ-004, REQ-005, REQ-006, FLOW-002*
+> **4 critical questions block flow analysis. Stopping here — this is the first.**
 >
-> **4 critical questions block flow analysis. Stopping here.**
+> ### Q-005 · Who actually approves? *(critical)*
+> §2 says the line manager. §5 says HR. These cannot both describe the sole approver,
+> and the document supports no reading over the others.
+>
+> **a)** Manager decides, HR audits after — *fastest; HR sees problems late*
+> **b)** HR approves after the manager — *two-stage, described nowhere else in the doc*
+> **c)** §5 is stale text from an earlier draft — *most likely; needs confirming*
+> **d)** Something else — tell me
+>
+> *Blocks REQ-004, REQ-005, REQ-006, FLOW-002*
 
 It stops. It doesn't pick a reading and generate forty confident artifacts on top of a guess.
+
+And it asks one at a time, because the answers are coupled — answering *"can a manager
+approve their own request?"* with *"no, escalate to skip-level"* creates a question that
+didn't exist a moment earlier:
+
+> *Q-001 answered — REQ-004 moves contradictory → clear, FLOW-003 retired.*
+> *It also raises a new one: the CEO has no skip-level. That's next.*
 
 Answer the four, re-run, and it produces a verdict that argues with you:
 
@@ -235,6 +252,13 @@ The parts that took the most thought, and why they are the way they are.
 **It stops instead of guessing.** An unanswered critical question is a fork in the product, not
 a blank to fill. Filling it produces a document that looks finished and is built on an invention
 nobody agreed to — the exact failure this tool exists to catch.
+
+**It asks one question at a time, with the options already framed.** A list of fifteen questions
+is a form, and nobody fills in a form. More importantly, questions are usually *coupled* — the
+answer to one deletes or creates another, so asking them together means asking someone to answer
+a question their own previous answer would have reframed. Spotting that something is undefined
+is the easy half; laying out the realistic options and what each one costs is the half that
+turns a ten-minute meeting into a ten-second answer.
 
 **Questions are files, not chat scrollback.** `02-questions.md` is a queue with statuses, so a
 review is resumable three weeks later by someone who wasn't in the original session. Chat
