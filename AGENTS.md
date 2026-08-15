@@ -3,11 +3,11 @@
 Instructions for AI coding agents working in this repository.
 
 This repo contains **FlowBreaker**, a requirements and UX stress-testing skill. The
-entire skill is one file: [`FLOWBREAKER.md`](FLOWBREAKER.md).
+entire skill is one file: [`SKILL.md`](SKILL.md).
 
 ## Working in this repo
 
-- `FLOWBREAKER.md` is the product. Everything else is documentation or examples.
+- `SKILL.md` is the product. Everything else is documentation or examples.
 - It must stay **self-contained**. Someone downloading only that file must get a
   fully working skill. Do not split content into sibling files it depends on.
 - Keep it under ~1,500 lines. Past that, reference material should move into a
@@ -30,11 +30,11 @@ these lines to that repo's `AGENTS.md`:
 ## Product & requirements review
 When asked to review a PRD, feature spec, user flow, or acceptance criteria —
 or when asked "what's missing here" about a product requirement —
-read ./FLOWBREAKER.md and follow it exactly.
+read ./SKILL.md and follow it exactly.
 Do not skip its clarification-question gate.
 ```
 
-Then drop `FLOWBREAKER.md` in that repo's root.
+Then drop `SKILL.md` in that repo's root.
 
 **Keep the pointer short; leave the skill in its own file.** `AGENTS.md` loads into
 every conversation in a repository, so inlining the full skill costs tokens on every

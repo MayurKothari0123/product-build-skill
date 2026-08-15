@@ -28,7 +28,7 @@ permissions" is a valid and valuable result (R7).
 ## Running them
 
 ```
-Follow FLOWBREAKER.md to review examples/adversarial/01-contradiction.md
+Follow SKILL.md to review examples/adversarial/01-contradiction.md
 ```
 
 Check the expected behaviour in the table above. There are no golden outputs
