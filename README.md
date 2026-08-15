@@ -111,25 +111,30 @@ designed.
 
 ---
 
-## Quickstart
+## Using it
+
+### 1 · Install — pick one
+
+**As a Claude Code skill** (recommended — gives you `/flowbreaker` and automatic firing):
+
+```bash
+mkdir -p .claude/skills/flowbreaker
+curl -o .claude/skills/flowbreaker/SKILL.md https://raw.githubusercontent.com/MayurKothari0123/product-build-skill/main/SKILL.md
+```
+
+**As a plain file** (Codex, Cursor, Aider, Gemini CLI — anything that reads files):
 
 ```bash
 curl -O https://raw.githubusercontent.com/MayurKothari0123/product-build-skill/main/SKILL.md
 ```
 
-Then, in any agent:
-
-```
-Follow SKILL.md to review docs/prd.md
-```
-
-That's the whole installation. Two optional upgrades:
+That's the entire installation. No package manager, no build step, no version to pin.
 
 <details>
-<summary><b>Make it trigger automatically</b> — so "review this PRD" just works</summary>
+<summary>Optional: make the plain-file install fire automatically too</summary>
 
-Add this to your repo's `AGENTS.md`. Claude Code, Codex and Cursor all read that file
-automatically:
+Claude Code finds skills on its own. Codex and Cursor don't — they need to be told the file
+exists. Add this to your repo's `AGENTS.md`, which both read automatically:
 
 ```markdown
 ## Product & requirements review
@@ -143,39 +148,45 @@ Keep the pointer short and leave the skill in its own file — `AGENTS.md` loads
 conversation in the repo, so inlining the skill costs tokens on every unrelated turn.
 </details>
 
-<details>
-<summary><b>Install as a Claude Code skill</b> — gives you <code>/flowbreaker</code></summary>
+### 2 · Say what you want
 
-`SKILL.md` ships with YAML frontmatter, so the same file doubles as a skill file. Other
-agents ignore the frontmatter harmlessly.
+You never name a mode. It reads your request and picks one, then says which in a line so you
+can correct it.
 
-```bash
-mkdir -p .claude/skills/flowbreaker && cp SKILL.md .claude/skills/flowbreaker/SKILL.md
-```
-</details>
+| You type | Mode | What happens | Takes |
+|---|---|---|---|
+| *"build leave approval"* · *"implement CSV export"* · *"add SSO"* | `build` | Up to **3** questions, then it writes the code — with the edge cases handled | ~2 min |
+| *"sanity-check adding a reports page"* · a rough idea in chat | `quick` | Restate → top 5 questions → the edge cases most likely to bite | ~10 min |
+| *"review docs/prd.md"* · *"what's missing here?"* | `review` | The full 9-step workflow, both gates, full report | ~20–30 min |
 
-### Modes
-
-| Mode | Fires when you say | Runs |
-|---|---|---|
-| `build` | *"build X"*, *"implement X"*, *"add X"* | ≤3 questions, then it builds. ~2 min. |
-| `quick` | *"sanity-check this"*, a rough idea | Restate → top 5 questions → likely edge cases. ~10 min. |
-| `review` | *"review docs/prd.md"*. **Default for a document.** | The full 9-step workflow below. ~20–30 min. |
-
-**It infers the mode — you never pick one.** It states which it chose in a line so you can
-correct it, then goes.
+With the skill installed you can also just type `/flowbreaker`. Without it, prefix anything with
+*"Follow SKILL.md to…"*.
 
 **`build` is the point of the whole thing.** Every other mode fires once you already know you
 have a spec problem, which is when you need help least. `build` fires when someone types *"build
 leave approval"* into a coding agent that's about to silently decide managers can approve their
 own requests, that sick leave shows on the team calendar, and that a request nobody touches sits
-there forever. It asks up to three questions — only ones where a wrong answer is expensive to
-reverse — records them, and builds with the edge cases already handled. Can't get under three
-questions? Then it's a spec problem, and it says so and offers `review`.
+there forever. Three questions maximum, and only where a wrong answer is expensive to reverse.
+If it can't get under three, that's a spec problem — it says so and offers `review`.
 
-**Input:** anything readable — a PRD, user stories, acceptance criteria, a Notion export, a
-meeting transcript, three paragraphs in the chat. Structure helps but isn't required; *absence*
-of structure is itself a finding it reports.
+### 3 · Answer the questions
+
+It asks **one at a time**, with 2–4 options and what each one costs. You reply in chat like you
+would to a colleague:
+
+```
+Q-001: no, escalate to skip-level
+```
+
+Or unblock it without answering — *"assume no self-approval and continue"* (recorded as an
+assumption forever, never as a fact), or *"just carry on"* (proceeds, but the verdict can't be
+`PROCEED`).
+
+### What it takes as input
+
+Anything readable — a PRD, user stories, acceptance criteria, a Notion export, a meeting
+transcript, three paragraphs in the chat. Structure helps but isn't required; *absence* of
+structure is itself a finding it reports.
 
 ---
 
@@ -211,18 +222,9 @@ rests on invented product decisions. FlowBreaker stops.
 **GATE 2** binds the verdict to rules it can't talk itself out of: any open `critical`, or three
 or more open `high` questions, and `PROCEED` is unavailable — no matter how good the rest looks.
 
-### Answering questions
-
-It asks one at a time, with 2–4 framed options and what each costs. You reply in chat. Statuses:
-`open`, `answered`, `assumed`, `deferred` — all recorded in `decisions.md` at the end.
-
-Say **"assume X and continue"** and it records `ASSUMP-00N` and proceeds — but it stays an
-assumption in every artifact it touches and reappears in the readiness report. It never becomes
-a fact. Say **"just carry on"** and it proceeds with questions open, and the verdict cannot be
-`PROCEED`.
-
-Answering one critical usually exposes the next layer down. Answering "a manager's own leave
-escalates to skip-level" immediately raises: who approves for the CEO?
+Answering one critical usually exposes the next layer down — answering *"a manager's own leave
+escalates to skip-level"* immediately raises *"so who approves for the CEO?"*. A falling
+open-question count is not by itself a sign of progress.
 
 ---
 
@@ -298,6 +300,27 @@ around the person reading it.
 **One file, no dependencies.** Portability across agents was worth more than features that would
 require a runtime. It's plain Markdown, so it works anywhere and you can read the whole thing
 before trusting it.
+
+---
+
+## How it's tested
+
+There's no test runner — it's a prompt, not a program. It's verified against four
+deliberately hostile fixtures in [`examples/adversarial/`](examples/adversarial/), each aimed at
+one failure mode:
+
+| Fixture | It must | Guards against |
+|---|---|---|
+| `01-contradiction.md` | Report the conflict and ask which is correct | Silently picking a side and building on it |
+| `02-no-problem.md` | Refuse to proceed past step 1 | Inventing a user problem to keep moving |
+| `03-permission-gap.md` | Raise a `critical` permission question | Treating an unwritten access rule as "presumably fine" |
+| `04-complete.md` | **Find no critical questions** | Manufacturing findings to look thorough |
+
+**`04-complete.md` is the important one.** Recall is easy — any sufficiently anxious reviewer
+finds five criticals in any document. A tool that returns five criticals on every input teaches
+its user to skim past all five, including the one that mattered. So inventing a critical for the
+complete spec is a bug of exactly the same severity as missing a real one, and it's treated as
+one.
 
 ---
 
