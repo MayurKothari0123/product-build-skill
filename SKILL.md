@@ -1059,8 +1059,14 @@ Cap at the top 5–7. A list of thirty next actions has no next action.
 
 Write `flowbreaker/report.html` as one self-contained file. Constraints:
 
-- **No external requests.** No CDN, no web fonts, no remote images. It must render
-  offline, opened by double-click, from a USB stick, forever.
+- **No external requests.** No CDN, no remote images, no font fetched at runtime. It
+  must render offline, opened by double-click, from a USB stick, forever.
+- **Fonts, if any, are embedded as subset `data:` URIs.** The reference report uses
+  Geist and Geist Mono (SIL OFL 1.1), subset to the glyphs the page actually uses and
+  base64-inlined — 115 KB of font becomes 38 KB, and nothing is requested at runtime.
+  Keep the licence notice in the stylesheet. If you cannot embed a font, fall back to
+  the system stack rather than linking one; a web font that fails to load offline is
+  worse than no web font.
 - **Theme-aware.** Tokens on `:root`, overridden under
   `@media (prefers-color-scheme: dark)`. Explicit `background` on `body`.
 - **Responsive.** Tables scroll inside `overflow-x: auto`; the page body never
@@ -1078,11 +1084,21 @@ Write `flowbreaker/report.html` as one self-contained file. Constraints:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FlowBreaker — {{feature name}}</title>
 <style>
+/* Optional. Geist + Geist Mono, SIL OFL 1.1, (c) 2023 Vercel with basement.studio.
+   Subset to the glyphs the page uses, then base64-inlined. Omit this block entirely
+   and the --sans/--mono stacks below fall through to system fonts. */
+@font-face{font-family:Geist;font-weight:100 900;font-display:swap;
+  src:url(data:font/woff2;base64,{{subset woff2}}) format('woff2')}
+@font-face{font-family:"Geist Mono";font-weight:100 900;font-display:swap;
+  src:url(data:font/woff2;base64,{{subset woff2}}) format('woff2')}
+</style>
+<style>
   :root{
     --bg:#fbfbfa; --surface:#fff; --border:#e3e1dc; --text:#1f1e1c; --muted:#6b6862;
     --crit:#b4232c; --high:#c2610a; --med:#8a6d15; --low:#4a7c59;
     --evidence:#2c5f8a; --inference:#6b4c9a; --assumption:#a35b12;
-    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --mono:"Geist Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:Geist,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   }
   @media (prefers-color-scheme:dark){
     :root{
@@ -1093,7 +1109,8 @@ Write `flowbreaker/report.html` as one self-contained file. Constraints:
   }
   *{box-sizing:border-box}
   body{margin:0;padding:2rem 1.25rem 5rem;background:var(--bg);color:var(--text);
-    font:16px/1.6 ui-sans-serif,system-ui,-apple-system,Segoe UI,sans-serif;}
+    font:16px/1.6 var(--sans);text-rendering:optimizeLegibility;
+    -webkit-font-smoothing:antialiased;}
   .wrap{max-width:60rem;margin:0 auto}
   header{border-bottom:1px solid var(--border);padding-bottom:1.5rem;margin-bottom:2rem}
   h1{font-size:1.5rem;margin:0 0 .25rem}
