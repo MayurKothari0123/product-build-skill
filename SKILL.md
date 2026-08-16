@@ -954,21 +954,22 @@ asks to see the state matrix, print it in chat.
 
 ### The verdict
 
-One of five. Pick the first that applies, reading top to bottom.
+One of four. Pick the first that applies, reading top to bottom.
 
 | Verdict | When | What the user should do |
 |---|---|---|
 | `CLARIFY` | Any critical question open, critical risk unmitigated, critical requirement contradictory/missing, **or 3+ open `high` questions that block requirements** | Answer the blocking questions. Nothing else is worth doing first. |
 | `REDESIGN` | Questions are answered but the flows have structural problems — dead ends, unresolvable permission conflicts, a model that can't express the requirements | Rework the flow or model before speccing further |
-| `USER-TEST` | Spec is coherent, but rests on unvalidated assumptions about user behaviour or needs | Talk to real users about the specific assumptions listed |
-| `PROTOTYPE` | Spec is coherent and the risk is interaction design rather than logic | Build a throwaway prototype and put it in front of people. The remaining risk is not answerable on paper. |
+| `VALIDATE` | Spec is coherent, but the remaining risk is not answerable on paper — unvalidated assumptions about user behaviour, or interaction design that has to be seen to be judged | Put something in front of real people: talk to them about the specific assumptions listed, or build a throwaway prototype. Name which, and why. |
 | `PROCEED` | No critical questions open, no unmitigated critical risks, coverage adequate, assumptions acknowledged | Implement — with the listed assumptions carried into the plan |
 
 GATE 2 (§3) is absolute: `PROCEED` is unavailable while any critical item is open,
 regardless of how good everything else looks.
 
-`USER-TEST` and `PROTOTYPE` frequently both apply. Give the one that resolves more
-risk first, and mention the other.
+`VALIDATE` replaced two verdicts that were almost always returned together. When it
+applies, say which form of validation resolves more risk — a conversation or a
+prototype — and why. "Go validate" without naming the cheaper of the two is not a
+recommendation.
 
 ### Reporting rules
 
@@ -1122,7 +1123,7 @@ Write `flowbreaker/report.html` as one self-contained file. Constraints:
     padding:.6rem 1rem;border-radius:.5rem;margin:1.25rem 0 .5rem;
     border:2px solid currentColor}
   .verdict.clarify,.verdict.redesign{color:var(--crit)}
-  .verdict.user-test,.verdict.prototype{color:var(--high)}
+  .verdict.validate{color:var(--high)}
   .verdict.proceed{color:var(--low)}
   .verdict-why{color:var(--muted);margin:0 0 1.5rem}
   .grid{display:grid;gap:.75rem;grid-template-columns:repeat(auto-fit,minmax(8rem,1fr));margin:1.5rem 0}

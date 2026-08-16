@@ -34,3 +34,7 @@ Follow SKILL.md to review examples/adversarial/01-contradiction.md
 Check the expected behaviour in the table above. There are no golden outputs
 committed for these — the assertion is behavioural, and pinning exact output would
 make them brittle for no benefit.
+
+The most recent run is recorded in [RESULTS.md](RESULTS.md) — what was found, what was
+deliberately *not* found, and why. Re-run after any change to §1, §5 or §6 and update
+it.

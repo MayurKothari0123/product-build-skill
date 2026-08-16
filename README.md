@@ -82,6 +82,14 @@ Every artifact behind that verdict is committed here:
 **[examples/01-leave-request-approval/](examples/01-leave-request-approval/)** — the input PRD,
 and the four Markdown files FlowBreaker generated alongside the report.
 
+Two more complete runs are committed:
+**[offline field visit check-in](examples/02-offline-field-visit-checkin/output/)** (an app
+required to work offline *and* report status in near real time — the document requires both and
+reconciles neither) and
+**[device event ingestion](examples/03-device-event-ingestion/output/)** (a one-minute alert SLA
+promised for sensors the same document says go offline for hours). Both found **0 of their edge
+cases specified in the source.**
+
 ---
 
 ## The problem it solves
@@ -322,6 +330,10 @@ one failure mode:
 | `02-no-problem.md` | Refuse to proceed past step 1 | Inventing a user problem to keep moving |
 | `03-permission-gap.md` | Raise a `critical` permission question | Treating an unwritten access rule as "presumably fine" |
 | `04-complete.md` | **Find no critical questions** | Manufacturing findings to look thorough |
+
+Last run: **[all four pass](examples/adversarial/RESULTS.md)** — including `04-complete`,
+where the correct output is a short review reporting two `medium` and four `low` gaps
+and saying plainly that nothing blocks implementation.
 
 **`04-complete.md` is the important one.** Recall is easy — any sufficiently anxious reviewer
 finds five criticals in any document. A tool that returns five criticals on every input teaches
